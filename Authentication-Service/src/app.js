@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import bodyParser from 'body-parser';
 import authRoutes from './routes/authRoutes.js';
-import { startRpcServer } from './events/rpcServers.js';
+
 import authService from './services/authService.js';
 import { setupSwagger } from './utils/swagger.js';
 
