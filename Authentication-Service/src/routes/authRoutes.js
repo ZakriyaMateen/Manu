@@ -12,10 +12,10 @@ router.get('/refresh', refreshToken);
 router.post('/logout', logout);
 router.post('/verify-otp', verifyOtp)
 router.post('/google-auth', googleLogin)
-router.put('/update-user', verifyJWT, upload.single('display_image'), uploadErrorHandler, updateUser)
+router.patch('/update-user', verifyJWT, upload.single('display_image'), uploadErrorHandler, updateUser)
 router.put('/update-password', verifyJWT, updatePassword)
 router.get('/get-my-profile', verifyJWT, getMyProfile)
-router.get('/get-some-profile/id', verifyJWT, authorize(['admin']), getOtherProfile)
+router.get('/get-some-profile/:id', verifyJWT, authorize(['admin']), getOtherProfile)
 router.get('/get-all-users', verifyJWT, authorize(['admin']), getAllUsers)
 router.delete('/delete-account', verifyJWT, deleteAccount)
 router.delete('/delete-user/:id', verifyJWT, authorize(['admin']), deleteUser)

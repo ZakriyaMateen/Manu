@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     otp: { type: Number, default: null },
     otpExpiry: { type: Date, default: null },
     imageUrl: { type: String, default: null },
+    isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false, required: true }
 });
 

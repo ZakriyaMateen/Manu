@@ -186,50 +186,61 @@ export async function refreshToken(req, res) {
         res.status(401).json({ error: err.message });
     }
 }
+
 export async function logout(req, res) {
+    // 0) Clear the cookies upfront so it happens in every case
+    res.clearCookie('accessToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict'
+    });
+
     try {
-        const { _id: id } = req.user;
-
-        // const userId = req.user._id; 
-        if (!id) {
-            throw new ApiError(401, "unauthorized request")
+        // 1) Ensure we have an authenticated user
+        if (!req.user || !req.user._id) {
+            return res
+                .status(401)
+                .json(new ApiResponse(401, "Unauthorized: no user session found"));
         }
 
-        const oldUser = await authService.logout(id);
-        console.log("good")
+        const userId = req.user._id;
+
+        // 2) Ask your service to “log out” (e.g. clear refreshToken in DB)
+        const oldUser = await authService.logout(userId);
         if (!oldUser) {
-            throw new ApiError(401, "Invalid user id")
-        }
-        console.log(oldUser)
-        // ✅ Blacklist the token in Redis until it would naturally expire
-
-        if (!oldUser.refreshToken) {
-            throw new ApiError(400, "User already logged out")
+            return res
+                .status(404)
+                .json(new ApiResponse(404, "User not found"));
         }
 
-        const payload = jwt.verify(oldUser.refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        // 3) If they’re already logged out (no refresh token), let them know
+        const { refreshToken } = oldUser;
+        if (!refreshToken) {
+            return res
+                .status(400)
+                .json(new ApiResponse(400, "User already logged out"));
+        }
 
-        const expiresIn = payload.exp - Math.floor(Date.now() / 1000); // in seconds
-
+        // 4) Blacklist the refresh token in Redis
+        const payload = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const expiresIn = payload.exp - Math.floor(Date.now() / 1000);
         await redis.set(`bl:${refreshToken}`, 'true', 'EX', expiresIn);
-        // 🧼 Clear cookies by setting them to empty and `maxAge: 0`
-        res.cookie('accessToken', '', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 0,
-        });
 
-        res.cookie('refreshToken', '', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 0,
-        });
-
-        return res.status(202).json(new ApiResponse(200, "Logged out successfully!")); // No Content
+        // 5) Success response
+        return res
+            .status(200)
+            .json(new ApiResponse(200, "Logged out successfully"));
     } catch (err) {
-        res.status(400).json({ error: err.message });
+        // 6) Handle any errors (e.g. invalid token, Redis failure)
+        const code = err.statusCode || 500;
+        return res
+            .status(code)
+            .json(new ApiResponse(code, err.message));
     }
 }
 
@@ -294,7 +305,8 @@ export const getMyProfile = asyncHandler(async (req, res) => {
     if (!id) {
         throw new ApiError(401, "Unauthorized")
     }
-    const user = authService.getUserById(id);
+
+    const user = await authService.getUserById(id);
     if (user) {
         return res.status(200).json(new ApiResponse(200, user, "Profile fetched successfully!"));
 
@@ -312,6 +324,7 @@ export const suspendAccount = asyncHandler(async (req, res) => {
         throw new ApiError(201, "Invalid user id")
     }
     const result = await authService.updateUser(id, { isActive: false });
+
     if (result) {
         return res.status(200).json(new ApiResponse(200, result, "User suspended successfully!"));
     }
@@ -367,7 +380,7 @@ export const getOtherProfile = asyncHandler(async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new ApiError(201, "Invalid user id")
     }
-    const user = authService.getUserById(id);
+    const user = await authService.getUserById(id);
     if (user) {
         return res.status(200).json(new ApiResponse(200, user, "Profile fetched successfully!"));
 

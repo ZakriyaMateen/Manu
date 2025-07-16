@@ -49,7 +49,7 @@ class UserRepository {
 
     async updateUser(userId, user) {
         // Build updateData dynamically (exclude email, password, and null/undefined fields)
-        const allowedFields = ['name', 'role', 'refreshToken', 'otp', 'otpExpiry', 'isVerified', 'imageUrl'];
+        const allowedFields = ['name', 'role', 'refreshToken', 'otp', 'otpExpiry', 'isVerified', 'imageUrl', 'isActive'];
         const updateData = {};
 
         for (const key of allowedFields) {

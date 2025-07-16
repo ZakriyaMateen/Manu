@@ -3,7 +3,7 @@ import { handleProxyError } from '../../middleware/errorHandler.js';
 
 
 export default createProxyMiddleware({
-    target: 'http://localhost:4002',
+    target: 'ttp://auth-service:4002',
     changeOrigin: true,
     pathRewrite: { '^/api/v1/auth': '/auth' }, // proxy to /auth/ in auth service
     onProxyReq: fixRequestBody,
