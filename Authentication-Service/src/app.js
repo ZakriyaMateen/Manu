@@ -41,19 +41,11 @@ app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '500mb' }));
-app.use(bodyParser.json()); // to parse application/json
-app.use(bodyParser.urlencoded({ extended: true })); // to parse form data
-// 2) Static files
-// app.use('/public', express.static('public'));
 
-// 3) Auth routes under /auth
-// app.use('/auth', authRoutes);
+
+
 app.use('/', authRoutes);
-setupSwagger(app);
 
-
-// 4) Health‐check
-// app.use('/', (_req, res) => res.send('Auth Service is up and running'));
 
 app.listen(PORT, () => console.log(`Auth Service listening on ${PORT}`));
 

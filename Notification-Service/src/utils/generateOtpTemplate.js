@@ -14,7 +14,7 @@ export const generateOtpTemplate = (email, otp) => {
           Hi <strong>${email}</strong>,
         </p>
         <p style="color: #4a4a4a; font-size: 16px;">
-          Thank you for signing up! Please use the OTP below to verify your email address:
+          Thankyou for using Interview.ai! Please use the OTP below to verify your email address:
         </p>
 
         <div style="text-align: center; margin: 30px 0;">

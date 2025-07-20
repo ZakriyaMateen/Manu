@@ -10,7 +10,7 @@ class UserRepository {
         return await User.findOne({ email });
     }
     async findById(id) {
-        console.log(id);
+        console.log("ID : ", id);
         return await User.findById(id);
     }
     async updateRefreshToken(userId, token) {

@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000;
 connectDB()
     .then(() => {
         app.listen(PORT, () => {
-            console.log(`✅ Auth Service running on http://localhost:${PORT}`);
+            console.log(`✅ Gateway service on http://localhost:${PORT}`);
         });
     })
     .catch((err) => {

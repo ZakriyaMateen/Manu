@@ -18,6 +18,7 @@ import express from 'express';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import { verifyJWT } from './middleware/authMiddleware.js';
 import proxyRoutes from "../src/routes/proxyRoutes.js"
+import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
 
@@ -35,5 +36,7 @@ app.use(express.json());
 app.get('/ping', (_req, res) => res.send('pong'));
 app.use((_req, res) => res.status(404).json({ error: 'Not Found' }));
 
+
+app.use(errorHandler)
 app.listen(process.env.PORT || 4010);
 export default app;

@@ -18,9 +18,23 @@ export default function (req, res, next) {
     }
 }
 
+export function unpackForwardedUser(req, _res, next) {
+    const raw = req.headers['x-user'];
 
+
+    if (raw) {
+        try {
+            req.user = JSON.parse(decodeURIComponent(raw));
+            console.log(req.user)
+        } catch (e) {
+            console.warn('Failed to parse forwarded user header', e);
+        }
+    }
+    next();
+}
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
+
     const isProduction = process.env.NODE_ENV === 'production';
     const options = {
         httpOnly: true,
@@ -29,6 +43,7 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         path: '/',
     };
     try {
+        console.log("VERIFY JWT CALLED : ")
         const token = req.headers.authorization?.replace("Bearer ", "")
 
         if (!token) {

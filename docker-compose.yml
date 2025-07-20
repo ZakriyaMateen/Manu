@@ -1,8 +1,86 @@
+# version: '3.8'
+
+# services:
+#   mongo:
+#     image: mongo:6
+#     restart: always
+#     volumes:
+#       - mongo-data:/data/db
+#     ports:
+#       - "27017:27017"
+
+#   rabbitmq:
+#     image: rabbitmq:3-management
+#     restart: always
+#     environment:
+#       RABBITMQ_DEFAULT_USER: guest
+#       RABBITMQ_DEFAULT_PASS: guest
+#     ports:
+#       - "5672:5672"
+#       - "15672:15672"
+
+#   auth-service:
+#     build:
+#       context: ./Authentication-Service
+#       dockerfile: Dockerfile
+#     restart: on-failure
+#     command: npx nodemon server.js
+#     volumes:
+#       - ./Authentication-Service:/app
+#     depends_on:
+#       - mongo
+#       - rabbitmq
+#     ports:
+#       - "4002:4002"
+#     environment:
+#       - PORT=4002
+#       - MONGO_URI=mongodb://mongo:27017/AuthMicro
+#       - RABBITMQ_URL=amqp://rabbitmq:5672
+
+#   notification-service:
+#     build:
+#       context: ./Notification-Service
+#       dockerfile: Dockerfile
+#     restart: on-failure
+#     command: npx nodemon server.js
+#     volumes:
+#       - ./Notification-Service:/app
+#     depends_on:
+#       - mongo
+#     ports:
+#       - "4003:4003"
+#     environment:
+#       - PORT=4003
+#       - MONGO_URI=mongodb://mongo:27017/AuthMicro
+#       - RABBITMQ_URL=amqp://rabbitmq:5672
+
+#   gateway-service:
+#     build:
+#       context: ./Gateway-Service
+#       dockerfile: Dockerfile
+#     restart: on-failure
+#     command: npx nodemon server.js
+#     volumes:
+#       - ./Gateway-Service:/app
+#     depends_on:
+#       - auth-service
+#       - notification-service
+#       - mongo
+#     ports:
+#       - "4010:4010"
+#     environment:
+#       - PORT=4010
+#       - AUTH_URL=http://auth-service:4002
+#       - NOTIFICATION_URL=http://notification-service:4003
+#       - MONGO_URI=mongodb://mongo:27017/AuthMicro
+
+# volumes:
+#   mongo-data:
 version: '3.8'
 
 services:
   mongo:
-    image: mongo:6
+    image: mongo:7
     restart: always
     volumes:
       - mongo-data:/data/db
@@ -16,8 +94,14 @@ services:
       RABBITMQ_DEFAULT_USER: guest
       RABBITMQ_DEFAULT_PASS: guest
     ports:
-      - "5672:5672"     # AMQP
-      - "15672:15672"   # UI: http://localhost:15672
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
 
   auth-service:
     build:
@@ -30,10 +114,14 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+      - redis
+    ports:
+      - "4002:4002"
     environment:
       - PORT=4002
       - MONGO_URI=mongodb://mongo:27017/AuthMicro
       - RABBITMQ_URL=amqp://rabbitmq:5672
+      - REDIS_URL=redis://redis:6379
 
   notification-service:
     build:
@@ -45,9 +133,14 @@ services:
       - ./Notification-Service:/app
     depends_on:
       - mongo
+      - rabbitmq        # ← add this line
+      - redis           # ← if you ever need Redis here too
+    ports:
+      - "4003:4003"
     environment:
       - PORT=4003
       - MONGO_URI=mongodb://mongo:27017/AuthMicro
+      - RABBITMQ_URL=amqp://rabbitmq:5672
 
   gateway-service:
     build:
@@ -65,7 +158,7 @@ services:
       - "4010:4010"
     environment:
       - PORT=4010
-      - AUTH_URL=http://auth-service:4002
+      - AUTH_SERVICE_HOST=http://auth-service:4002
       - NOTIFICATION_URL=http://notification-service:4003
       - MONGO_URI=mongodb://mongo:27017/AuthMicro
 
