@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { JsonWebTokenError } from 'jsonwebtoken';
 import axios from 'axios'
 import { ApiError } from "../utils/ApiError.js";
 
@@ -33,7 +33,8 @@ export const isUserActive = asyncHandler(async (req, res, next) => {
             { headers: { "Content-Type": "application/json" } }
         );
 
-        // 200 OK → payload.data is the boolean
+        // 200 OK → payload.data is the boolean  
+
         if (response.data.data === true) {
             return next();
         } else {
